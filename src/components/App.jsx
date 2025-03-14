@@ -1,82 +1,54 @@
+import "./App.css";
+import initialContacts from "../contacts.json";
 
-import Notification from './Notification';
-import './App.css'
-import Description from './Description'
-import Feedback from './Feedback'
-import Options from './Options'
+import ContactForm from "./ContactForm";
+import ContactList from "./ContactList";
+import SearchBox from "./SearchBox";
 import { useState, useEffect } from "react";
 
-
-
-
 function App() {
-
-   const [values, setValues] = useState(() => {
-    const savedIndex = localStorage.getItem("index-reader");
-
-    
+  const [contacts, setContacts] = useState(() => {
+    const savedContacts = localStorage.getItem("contacts");
     try {
-      return savedIndex ? JSON.parse(savedIndex) : { good: 0, neutral: 0, bad: 0 };
+      return savedContacts ? JSON.parse(savedContacts) : initialContacts;
     } catch (error) {
       console.error("Помилка парсингу JSON з localStorage:", error);
-      return { good: 0, neutral: 0, bad: 0 };
+      return initialContacts;
     }
   });
 
-  const updateFeedback = (type) => {
-    setValues((prevValues) => ({
-      ...prevValues,
-      [type]: prevValues[type] + 1,
-    }));
+  useEffect(() => {
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  }, [contacts]);
+
+  const [filter, setFilter] = useState("");
+
+  const addContacts = (newContacts) => {
+    setContacts((prevContacts) => {
+      return [...prevContacts, newContacts];
+    });
   };
-useEffect(() => {
 
-  
-localStorage.setItem(`index-reader`, JSON.stringify(values))
-}, [values])
+  const deleteContact = (contactId) => {
+    setContacts((prevContacts) => {
+      return prevContacts.filter((contact) => contact.id !== contactId);
+    });
+  };
 
-    const totalFeedback = values.good + values.neutral + values.bad
+  const filterContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
-
-    const reset = () => {
-      if (totalFeedback > 0) {
-        setValues({ good: 0, neutral: 0, bad: 0 }); 
-       
-      console.log("reset");
-      }
-    };
   return (
-    <>
+    <div>
+      <h1>Phonebook</h1>
+      <p>{filter}</p>
+      <ContactForm onAdd={addContacts} />
+      <SearchBox value={filter} onFilter={setFilter} />
 
-
-<Description/>
-     
-
-
-   <Options
-   updateGood={updateFeedback}
-   
-   reset={reset}
-   total={totalFeedback}
-   /> 
-  {totalFeedback === 0 && <Notification/>}
-    
-
-{totalFeedback > 0 && <Feedback
-good={values.good}
-neutral={values.neutral}
-bad={values.bad}
-total={totalFeedback}
-positive={Math.round((values.good / totalFeedback) * 100)}
-   />}
-</>
-
- )
+      <ContactList contactsList={filterContacts} onDelete={deleteContact} />
+    </div>
+  );
 }
 
-export default App
-
-
-    
-   
- 
+export default App;
